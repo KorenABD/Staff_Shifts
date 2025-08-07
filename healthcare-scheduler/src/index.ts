@@ -1,39 +1,39 @@
 import { HealthcareAPI } from './api';
+import { DataProcessor } from './processor';
 
-async function testAPI() {
-  console.log('🏥 Healthcare Staff Scheduler - API Test\n');
+async function main() {
+  console.log('🏥 Healthcare Staff Scheduler\n');
 
-  // Test fetching data
-  const { users, posts } = await HealthcareAPI.fetchAllData();
+  try {
+    // Step 1: Fetch data from API
+    const { users, posts } = await HealthcareAPI.fetchAllData();
 
-  if (!users.success || !posts.success) {
-    console.error('❌ API test failed');
-    console.error('Users error:', users.error);
-    console.error('Posts error:', posts.error);
-    return;
-  }
+    if (!users.success || !posts.success) {
+      throw new Error(`API Error - Users: ${users.error}, Posts: ${posts.error}`);
+    }
 
-  console.log('\n📊 API Test Results:');
-  console.log(`👥 Users fetched: ${users.data?.length}`);
-  console.log(`📜 Posts fetched: ${posts.data?.length}`);
+    if (!users.data || !posts.data) {
+      throw new Error('No data received from API');
+    }
 
-  // Show sample data
-  if (users.data && users.data.length > 0) {
-    console.log('\n👤 Sample User:');
-    const sampleUser = users.data[0];
-    console.log(`  Name: ${sampleUser.name}`);
-    console.log(`  Email: ${sampleUser.email}`);
-    console.log(`  Company: ${sampleUser.company.name}`);
-    console.log(`  Phone: ${sampleUser.phone}`);
-  }
+    // Step 2: Process the data
+    const healthcareWorkers = DataProcessor.processData(users.data, posts.data);
 
-  if (posts.data && posts.data.length > 0) {
-    console.log('\n📋 Sample Post:');
-    const samplePost = posts.data[0];
-    console.log(`  User ID: ${samplePost.userId}`);
-    console.log(`  Title: ${samplePost.title.substring(0, 50)}...`);
+    // Step 3: Generate and display report
+    const report = DataProcessor.generateReport(healthcareWorkers);
+    console.log(report);
+
+    // Step 4: Show some detailed examples
+    console.log('🔍 Detailed Examples:');
+    healthcareWorkers.slice(0, 3).forEach(worker => {
+      console.log(`   ${worker.name} - ${worker.specialty} - ${worker.availability} - $${worker.hourlyRate}/hr`);
+    });
+
+  } catch (error) {
+    console.error('❌ Application Error:', error);
+    process.exit(1);
   }
 }
 
-// Run the test
-testAPI().catch(console.error);
+// Run the application
+main();
